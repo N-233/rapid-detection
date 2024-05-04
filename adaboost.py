@@ -1,30 +1,33 @@
 import numpy as np 
-import pickle
+import pickle # pickle模块是Python中用于序列化（即将对象转换为字节流）和反序列化（即从字节流中重新构建对象）的标准模块
 import time
 import math
 from sklearn.feature_selection import SelectPercentile
 
 
-
-
 # for the given test data number of positives, number of negatives
-
-
-
-f= open("train.pkl", 'rb') 
+# 打开一个名为"train.pkl"的文件，并将其加载到training变量中，这个文件包含了我们用于训练的数据。
+f= open("C:/Users/Administrator/Desktop/note/train.pkl", 'rb') 
 training = pickle.load(f)
 
 
-
-
-
 class vclassifier:
+    """
+    定义了一个名为vclassifier的类，它代表了一个弱分类器。
+    在初始化函数中，alphas是AdaBoost算法中的权重参数，clfs是弱分类器的集合，epoch是训练的轮数。
+    """
     def __init__(self,epoch):
         self.alphas = []
         self.clfs = []
         self.epoch =  epoch
         
     def train(self,data,positives,negatives):
+        """
+        这部分是vclassifier类中的 train 方法。它接受训练数据 data、正样本数和负样本数作为输入。它完成了以下步骤：
+        计算积分图像，这是一种对图像进行预处理的方法，可以快速计算出图像的某个区域内所有像素值的和。
+        为每个数据点分配权重，权重取决于其类别（正样本或负样本）。
+        创建用于分类的特征。特征是从输入图像中提取的不同形状和大小的区域，包括1x1、1x2、2x1、2x2、3x1、1x3、3x3等不同形状的区域
+        """
         train_intergral = []
         weights = []
 
@@ -93,6 +96,7 @@ class vclassifier:
 
     
         for t in range(self.epoch):
+            # 使用了 SelectPercentile 函数从所有特征中选择了最佳的特征，以提高分类器的性能。
             weights = weights / np.linalg.norm(weights)
             weak_classifiers = self.weak_classifier_train(X, y, features, weights)
             clf, error, accuracy = self.select_best(weak_classifiers, weights, data)
@@ -106,6 +110,8 @@ class vclassifier:
 
 
     def weak_classifier_train(self,X,y,features,weights):
+        # 在这部分，我们使用了 AdaBoost 算法进行训练。在每个迭代中，我们首先将权重向量归一化，然后训练一系列弱分类器。
+        # 然后，我们选择最佳的弱分类器，并更新权重向量和分类器的权重。
         num_pos=0
         num_neg=0
         l = len(y)
@@ -145,6 +151,7 @@ class vclassifier:
             classifiers.append(clf)
         return classifiers
 
+    # 
     def select_best(self, classifiers, weights, training_data):
         best_clf, best_error, best_accuracy = None, float('inf'), None
         for clf in classifiers:
